@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<link href="css/style.css" rel="stylesheet">
+<body>
+	<div id="container" style="height: 700px; min-width: 500px"></div>
+</body>
+<script>
+	var minDate, maxDate;
+	var chartData1, chartData2, chartData3;
+</script>
+<script src="js/highstock.js"></script>
+<script src="js/exporting.js"></script>
+<script src="js/d3.v4.js"></script>
+<script src="js/jquery.js"></script>
+<script src="js/script.js"></script>
+<script>
+	$(document).ready(function(){
+		d3.csv("data/data1.csv", function(data1){
+			data1.sort(Compare);
+			minDate = data1[0].date;
+			maxDate = data1[0].date;
+			setMinMax(data1);
+			d3.csv("data/data2.csv", function(data2){
+				data2.sort(Compare);
+				setMinMax(data2);
+				d3.csv("data/data2.csv", function(data3){
+					data3.sort(Compare);
+					setMinMax(data3);
+					chartData1 = getChartData(data1);
+					chartData2 = getChartData(data2);
+					chartData3 = getChartData(data3);
+					drawChart();
+				});
+			});
+		});
+	});
+</script>

@@ -1,4 +1,4 @@
-function drawChart(){
+function drawChart(chartData, oneDayCnt, selectedCnt){
   Highcharts.StockChart({
         chart: {
             renderTo: 'container',
@@ -53,7 +53,7 @@ function drawChart(){
 
             buttons: [{
                 type: 'day',
-                count: 1,
+                count: oneDayCnt,
                 text: '1d'
             }, {
                 type: 'day',
@@ -120,7 +120,7 @@ function drawChart(){
                 color: 'silver',
                 fontWeight: 'bold'
             },
-            selected: 2
+            selected: selectedCnt
         },
 
         plotOptions: {
@@ -242,7 +242,8 @@ function drawChart(){
                 height: '25%',
                 offset: 0,
                 lineWidth: 2
-            }, {
+            }, 
+            /*{
                 // max: 40,
                 //  min: 25,
                 //gridLineColor: 'transparent',
@@ -277,7 +278,7 @@ function drawChart(){
                 height: '70%',
                 lineWidth: 2
             },
-
+*/
 
 
 
@@ -312,7 +313,7 @@ function drawChart(){
                 //  },
 
 
-                data: chartData1
+                data: chartData[0]
             },
 
             {
@@ -324,10 +325,10 @@ function drawChart(){
                     valueDecimals: 2
                 },
                 color: 'rgb(122, 132, 152)',
-                data: chartData2,
+                data: chartData[1],
                 yAxis: 1,
             },
-
+/*
             {
                 name: 'SENTIMENT',
                 type: 'spline',
@@ -343,13 +344,13 @@ function drawChart(){
                 yAxis: 2,
 
             }
-
+*/
         ]
     });
 }
 
 function IsCompare(date1Str, date2Str){
-  var date1Arr = date1Str.split(","), date2Arr = date2Str.split(",");
+  var date1Arr = date1Str.split("/"), date2Arr = date2Str.split("/");
   for(var i = 0; i < date1Arr.length; i++){
     if(i > date2Arr.length) return 1;
     if(parseInt(date1Arr[i]) > parseInt(date2Arr[i])) return 1;
@@ -359,33 +360,51 @@ function IsCompare(date1Str, date2Str){
   return -1;
 }
 
+function compareCross(a, b){
+    if(b.date == "") return 1;
+    if(a.date == "") return -1;
+    var Date_of_Appointment1 = a.date.split('/');
+    var Date_of_Appointment2 = b.date.split('/');
+    var mdy1 = [], mdy2 = [];
+    for(i = 0; i < Date_of_Appointment1.length; i++){
+        mdy1.push(parseInt(Date_of_Appointment1[i]));
+        mdy2.push(parseInt(Date_of_Appointment2[i]));
+    }
+    if(mdy2.length < 2) return -1;
+    if(mdy1.length < 2) return 1;
+    if(mdy1[2] > mdy2[2]) return 1;
+    if(mdy1[2] < mdy2[2]) return -1;
+    if(mdy1[0] > mdy2[0]) return 1;
+    if(mdy1[0] < mdy2[0]) return -1;
+    if(mdy1[1] > mdy2[1]) return 1;
+    if(mdy1[1] < mdy2[1]) return -1;
+    return 0;
+}
+
 function Compare(datum1, datum2){
   var date1Str = datum1.date, date2Str = datum2.date;
   return IsCompare(date1Str, date2Str);
 }
 
-function setMinMax(data){
-  for(var i = 0; i < data.length;i++){
-    if(IsCompare(minDate, data[i].date) == 1){
-      minDate = data[i].date;
-    }
-    if(IsCompare(maxDate, data[i].date) == -1){
-      maxDate = data[i].date;
-    }
-  }
-}
-
 function getChartData(data){
-  var chartData = [];
+  var chartData1 = [], chartData2 = [];
+  var year, month, day;
+  var prevValue;
   for(var i = 0; i < data.length; i++){
-    var dateArr = data[i].date.split(",");
-    var dateUTC;
-    if(dateArr.length == 3){
-      dateUTC = Date.UTC(dateArr[0],dateArr[1],dateArr[2]);
+    var dateArr = data[i].date.split(" ");
+    var ymdArr = dateArr[0].split("/");
+    year = ymdArr[2], month = ymdArr[0]-1, day = ymdArr[1];
+    var timeArr;
+    if(dateArr.length > 1){
+        timeArr = dateArr[1].split(":");
+        dateUTC = Date.UTC(year,month,day,timeArr[0],timeArr[1]);
     }else{
-      dateUTC = Date.UTC(dateArr[0],dateArr[1],dateArr[2],dateArr[3],dateArr[4],dateArr[5]);
+        dateUTC = Date.UTC(year,month,day);
     }
-    chartData.push([dateUTC, parseInt(data[i].value)]);
+    value = [dateUTC, parseFloat(data[i].value)];
+    volume = [dateUTC, parseFloat(data[i].volume)];
+    chartData1.push(value);
+    chartData2.push(volume);
   }
-  return chartData;
+  return [chartData1,chartData2];
 }

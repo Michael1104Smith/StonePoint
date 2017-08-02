@@ -177,7 +177,6 @@
     H.wrap(H.Series.prototype, 'setData', function (proceed, points) {
         var opts = this.chart.options.flagsGrouping;
         if (this.type === 'flags' && opts) {
-            console.log('init flags grouping for ', this.name);
             groupPoints(this, arguments[1], opts, this.color);
             chartsOpts.set(this.chart, opts);
 
@@ -286,7 +285,6 @@
             }
 
             this.series.xAxis.setExtremes(start, end, true, true);
-            console.log('firePointEvent', arguments);
         }
 
 

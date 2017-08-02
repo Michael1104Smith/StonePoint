@@ -9,6 +9,69 @@ function drawChart(chartData){
             [1]
         ]]
     };
+var seriesData = [{
+                name: 'Intel Corp (INTC)',
+                type: 'area',
+                dataGrouping: groupingUnit,
+                id: 'dataSeries',
+                //compare: 'percent',
+                fillOpacity: 0.1,
+                threshold: null,
+                tooltip: {
+                    valueDecimals: 2
+                },
+
+                color: 'rgb(0, 180, 255)',
+
+                data: chartData[0]
+            },
+
+            {
+                name: 'Intel Corp (INTC) Volume',
+                type: 'column',
+                dataGrouping: groupingUnit,
+                showInLegend: false,
+                //threshold: null,
+                tooltip: {
+                    valueDecimals: 2
+                },
+                color: 'rgb(122, 132, 152)',
+                data: chartData[1],
+                yAxis: 1,
+            },
+
+            {
+                name: 'SENTIMENT',
+                type: 'spline',
+                dataGrouping: groupingUnit,
+                lineWidth: 1,
+                //threshold: null,
+                tooltip: {
+                    valueDecimals: 2
+                },
+                //compare: 'percent',
+
+                color: 'rgb(106,251,25)',
+                data: chartData[2],
+                yAxis: 2,
+
+            }
+        ];
+    for (var i = 0; i < chartData[3].length; i++){
+        seriesData.push(
+            {
+                type: 'flags',
+                data: chartData[3][i],
+                onSeries: 'dataSeries',
+                shape: 'squarepin',
+                events: {
+                    click: function(event) {
+                        displayNews(event.point.seq, 1);
+                    }
+                },
+                yAxis: 0,
+            });
+    }
   var chart = Highcharts.StockChart({
         chart: {
             renderTo: 'container',
@@ -360,66 +423,7 @@ function drawChart(chartData){
 
 
 
-        series: [{
-                name: 'Intel Corp (INTC)',
-                type: 'area',
-                dataGrouping: groupingUnit,
-                id: 'dataSeries',
-                //compare: 'percent',
-                fillOpacity: 0.1,
-                threshold: null,
-                tooltip: {
-                    valueDecimals: 2
-                },
-
-                color: 'rgb(0, 180, 255)',
-
-                data: chartData[0]
-            },
-
-            {
-                name: 'Intel Corp (INTC) Volume',
-                type: 'column',
-                dataGrouping: groupingUnit,
-                showInLegend: false,
-                //threshold: null,
-                tooltip: {
-                    valueDecimals: 2
-                },
-                color: 'rgb(122, 132, 152)',
-                data: chartData[1],
-                yAxis: 1,
-            },
-
-            {
-                name: 'SENTIMENT',
-                type: 'spline',
-                dataGrouping: groupingUnit,
-                lineWidth: 1,
-                //threshold: null,
-                tooltip: {
-                    valueDecimals: 2
-                },
-                //compare: 'percent',
-
-                color: 'rgb(106,251,25)',
-                data: chartData[2],
-                yAxis: 2,
-
-            }, 
-            {
-                type: 'flags',
-                data: chartData[3][0],
-                onSeries: 'dataSeries',
-                shape: 'squarepin',
-                events: {
-                    click: function(event) {
-                        displayNews(event.point.seq, 1);
-                    }
-                },
-                yAxis: 0,
-            }
-        ],
+        series: seriesData,
         flagsGrouping : {
             calculateFillColor : true,
             selectGroupOnClick : true,

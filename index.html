@@ -1,23 +1,64 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 <link href="css/style.css" rel="stylesheet">
 <body>
-	<div id="container" style="height: 700px; min-width: 500px"></div>
+	<div id="container"></div>
+	<div id="news">
+		<div class="header">News</div>
+		<div class="content">
+		</div>
+	</div>
+	<div id="myModal" class="modal fade">
+	    <div class="modal-dialog">
+	        <div class="modal-content">
+	            <div class="modal-header">
+	                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+	                <h4 class="modal-title">Confirmation</h4>
+	            </div>
+	            <div class="modal-body">
+	                <p>Do you want to save changes you made to document before closing?</p>
+	            </div>
+	            <div class="modal-footer">
+	                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+	            </div>
+	        </div>
+	    </div>
+	</div>
 </body>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 <script>
-	var chartData3, dateGroupIndex;
+	var chartData3, dateGroupIndex, newsData;
+	var displayCount = 100;
+	$(document).ready(function(){
+		d3.csv("data/news.csv", function(data){
+			data.sort(compareNew);
+			newsData = data;
+			displayNews(data[0].seq, 0);
+		});
+	});
 </script>
-<script src="js/highstock.js"></script>
-<script src="js/exporting.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<script src="js/highstock.src.js"></script>
+<script src="js/flags-grouping.js"></script>
 <script src="js/d3.v4.js"></script>
-<script src="js/jquery.js"></script>
 <script src="js/script.js"></script>
 <script>
 	$(document).ready(function(){
-		d3.csv("data/data7.csv", function(data3){
+		d3.csv("data/data8.csv", function(data3){
 			data3.sort(compare);
 			chartData3 = getChartData(data3);
 			drawChart(chartData3);
+		});
+
+		$('body').on('click', function(e) {
+			var obj = $(e.target);
+            if (obj.closest('.flag').length) {
+            	var index = obj.data('index');
+            	$('#myModal .modal-title').html(newsData[index].headline);
+            	$('#myModal .modal-body').html(newsData[index].News_Body);
+				$("#myModal").modal('show');
+            }
 		});
 	});
 </script>

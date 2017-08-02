@@ -134,9 +134,6 @@ function drawChart(chartData){
 
         plotOptions: {
             area: {
-
-
-
                 states: {
                     hover: {
                         lineWidth: 5
@@ -152,8 +149,22 @@ function drawChart(chartData){
                         lineWidth: 5
                     }
                 },
-
-
+            },
+            flags: {
+                shape :"squarepin",
+                style: {
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                    textAlign: 'center'
+                },
+                events: {
+                    mouseOver: function(){
+                        this.chart.flagTooltip = true;
+                    },
+                    mouseOut: function(){
+                        this.chart.flagTooltip = false;
+                    }
+                }
             }
         },
         xAxis: {
@@ -179,7 +190,9 @@ function drawChart(chartData){
                             });
                         }else{
                             $.each(this.series, function (index, obj) {
-                                obj.options.dataGrouping.units[0] = ['day', [1]];
+                                if(obj.index < 3){
+                                    obj.options.dataGrouping.units[0] = ['day', [1]];
+                                }
                             });
                         }
                     }else if (e.rangeSelectorButton != undefined) {
@@ -202,7 +215,9 @@ function drawChart(chartData){
                             });
                         }else{
                             $.each(this.series, function (index, obj) {
-                                obj.options.dataGrouping.units[0] = ['day', [1]];
+                                if(obj.index < 3){
+                                    obj.options.dataGrouping.units[0] = ['day', [1]];
+                                }
                             });
                         }
                     }
@@ -349,6 +364,7 @@ function drawChart(chartData){
                 name: 'Intel Corp (INTC)',
                 type: 'area',
                 dataGrouping: groupingUnit,
+                id: 'dataSeries',
                 //compare: 'percent',
                 fillOpacity: 0.1,
                 threshold: null,
@@ -390,8 +406,77 @@ function drawChart(chartData){
                 data: chartData[2],
                 yAxis: 2,
 
+            }, 
+            {
+                type: 'flags',
+                data: chartData[3][0],
+                onSeries: 'dataSeries',
+                shape: 'squarepin',
+                events: {
+                    click: function(event) {
+                        displayNews(event.point.seq, 1);
+                    }
+                },
+                yAxis: 0,
             }
-        ]
+        ],
+        flagsGrouping : {
+            calculateFillColor : true,
+            selectGroupOnClick : true,
+            minSelectableDateRange : 14 * 24 * 60 * 60 * 1000, // 2 weeks;
+            groupings : [{
+                zoomTimeSpan :  2 * 365 * 24 * 60 * 60 * 1000, // when more then 2 years selected
+                groupTimeSpan :      60 * 24 * 60 * 60 * 1000  // group flags by 60 days
+            },{
+                zoomTimeSpan :      365 * 24 * 60 * 60 * 1000, // when from 2 to 1 years selected
+                groupTimeSpan :      30 * 24 * 60 * 60 * 1000  // group by 30 days
+            }, {
+                zoomTimeSpan :      182 * 24 * 60 * 60 * 1000, // when from 1 to half year selected
+                groupTimeSpan :      15 * 24 * 60 * 60 * 1000  // group flags by 15 days
+            }, {
+                zoomTimeSpan :       90 * 24 * 60 * 60 * 1000, // when from half year to 3 month selected
+                groupTimeSpan :       5 * 24 * 60 * 60 * 1000  // group by 5 days
+            }]
+        },
+
+        tooltip : {
+            positioner: function (w, h, point) {
+                var position = this.getPosition(w, h, point);
+
+                if (this.chart.flagTooltip) {
+                    position.y += h/3*2;
+                }
+
+                return position;
+            },
+            useHTML : true,
+            followPointer : true,
+            formatter : function (tooltip) {
+                if (this.point && this.point.initialPoints && this.point.initialPoints.length > 1) {
+                    var text = '<b>' + Highcharts.dateFormat('%b %d, %Y', this.point.initialPoints[0].x) + '</b>' +
+                        '<span> - </span>' +
+                        '<b>' + Highcharts.dateFormat('%b %d, %Y', this.point.initialPoints[this.point.initialPoints.length - 1].x) + '</b><br/>';
+
+                    text += '<span style="font-size: 11px">';
+                    for (var i = 0; i < this.point.initialPoints.length; i++) {
+                        text += '<p style="width: 400px;white-space: nowrap;overflow: hidden;text-overflow: ellipsis;">- ' + this.point.initialPoints[i].text + '</p>'
+                        if (i === 5) {
+                            text += '<p>...</p>';
+                            break
+                        }
+                    }
+
+                    return text + '</span>';
+                } else if (this.point) {
+                    return '' +
+                        '<b>' + Highcharts.dateFormat('%b %d, %Y', this.point.x) + '</b><br/>' +
+                        '<span>' + this.point.text + '</span>';
+
+                }
+                return tooltip.defaultFormatter.apply(this, [tooltip]);
+            }
+
+        },
     });
 }
 
@@ -414,13 +499,33 @@ function compare(data1, data2){
     return 0;
 }
 
+function compareNew(data1, data2){
+    var dateArr1 = data1.date.split("/"), dateArr2 = data2.date.split("/");
+    if(parseInt(dateArr1[2]) > parseInt(dateArr2[2])) return 1;
+    if(parseInt(dateArr1[2]) < parseInt(dateArr2[2])) return -1;
+    for(var i = 0; i < dateArr1.length-1; i++){
+        if(parseInt(dateArr1[i]) > parseInt(dateArr2[i])) return 1;
+        if(parseInt(dateArr1[i]) < parseInt(dateArr2[i])) return -1;
+    }
+    var timePmArr1 = data1.Time.split(" "), timePmArr2 = data2.Time.split(" ");
+    if(timePmArr1[1] == "PM" && timePmArr2[1] == "AM") return 1;
+    if(timePmArr1[1] == "AM" && timePmArr2[1] == "PM") return -1;
+    var timeArr1 = timePmArr1[0].split(":"), timeArr2 = timePmArr2[0].split(":");
+    for(var i = 0; i < timeArr1.length; i++){
+        if(parseInt(timeArr1[i]) > parseInt(timeArr2[i])) return 1;
+        if(parseInt(timeArr1[i]) < parseInt(timeArr2[i])) return -1;
+    }
+    return 0;
+}
+
 function getChartData(data){
     dateGroupIndex = []
-  var valueData = [], volumeData = [], sentimentData = [];
+  var valueData = [], volumeData = [], sentimentData = [], flagData = [], flagTmpData = [];
   var year, month, day;
   var prevValue;
   var startInd = data.length, flag = true;
   var intraIndex = 0;
+    var k = 0;
   for(var i = 0; i < data.length; i++){
     var dateArr = data[i].date.split(" ");
     var ymdArr = dateArr[0].split("/");
@@ -457,7 +562,41 @@ function getChartData(data){
     }else if(data[i].sentiment){
         var sentiment = [dateUTC, parseFloat(data[i].sentiment)];
         sentimentData.push(sentiment);
+    }else if(data[i].headline){
+        if(k % 1000 == 0 && k > 0) {
+            flagData.push(flagTmpData);
+            flagTmpData = [];
+        }
+        flagTmpData.push({x:dateUTC, title:String.fromCharCode(65+i%26), text:data[i].headline, seq:data[i].seq});
+        k++;
     }
   }
-  return [valueData,volumeData,sentimentData];
+  if(flagTmpData.length > 0){
+    flagData.push(flagTmpData);
+  }
+  return [valueData,volumeData,sentimentData,flagData];
+}
+function displayNews(seq, startFlag){
+    $('#news .content').html('');
+    var i;
+    for(i = 0; i < newsData.length; i++){
+        if(newsData[i].seq == seq){
+            break;
+        }
+    }
+    var j = i;
+    for(i; i < newsData.length; i++){
+        if(i-j > displayCount){
+            break;
+        }
+        var className = 'eachContent';
+        if(startFlag != 0 && i == j){
+            className += ' highlight';
+        }
+        var flag = "<div class='flag' data-index='"+i+"'>"+newsData[i].seq+"</div>";
+        var right = "<div class='right'><div class='rightText'>"+newsData[i].headline+"</div><div class='rightDate'>"+newsData[i].date+" "+newsData[i].Time+"</div></div>";
+        var clear = "<div style='clear:both'></div>";
+        var html = "<div class='"+className+"''>"+flag+right+clear+"</div>";
+        $('#news .content').append(html);
+    }
 }

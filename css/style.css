@@ -1,6 +1,39 @@
-#svg{
-	width: 800px;
-	height: 600px;
-	margin:30px auto;
-	display:block;
+#container{
+	width: 75%;
+	height: 800px;
+	float: left;
+}
+#news{
+	width: 20%;
+	margin-left: 3%;
+	float: left;
+	height: 800px;
+	overflow-y: scroll;
+}
+#news .content .eachContent{
+	margin-top: 5px;
+	padding:3px;
+}
+#news .content .eachContent.highlight{
+	border:1px solid red;
+}
+#news .content .eachContent .flag{
+	font-size: 11px;
+	border: 1px solid black;
+	font-weight: bold;
+	-moz-box-shadow:    1px 1px 2px 3px #ccc;
+  	-webkit-box-shadow: 1px 1px 2px 3px #ccc;
+  	box-shadow:         1px 1px 2px 3px #ccc;
+  	float:left;
+  	padding: 3px;
+  	cursor: pointer;
+}
+#news .content .eachContent .right{
+	font-size: 9px;
+	float: left;
+	margin-left: 5%;
+	width: 80%;
+}
+#news .content .eachContent .right .rightText{
+	color: #00f;
 }

@@ -28,15 +28,11 @@
 </body>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
 <script>
-	var chartData3, dateGroupIndex, newsData;
-	var displayCount = 100;
-	$(document).ready(function(){
-		d3.csv("data/news.csv", function(data){
-			data.sort(compareNew);
-			newsData = data;
-			displayNews(data[0].seq, 0);
-		});
-	});
+	var dateGroupIndex, newsData, chart, totalData;
+	var maxDate = 0;
+	var displayCount = 500;
+	var groupingArryIndex = [];
+	var intraFlag = 0;
 </script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 <script src="js/highstock.src.js"></script>
@@ -45,19 +41,91 @@
 <script src="js/script.js"></script>
 <script>
 	$(document).ready(function(){
-		d3.csv("data/data8.csv", function(data3){
-			data3.sort(compare);
-			chartData3 = getChartData(data3);
-			drawChart(chartData3);
+		var chartData3;
+		//makeGrouping();
+		d3.csv("data/data9.csv", function(data3){
+			d3.csv("data/news3.csv", function(data){
+				data.sort(compareNew);
+				newsData = data;
+				data3.sort(compare);
+				totalData = data3;
+				chartData3 = getChartData(data3);
+				drawChart(chartData3);
+	            var startInd = getIndex(1, "month", "1m", 0, chartData3);
+	            displayNews(startInd, newsData.length-1, -1);
+			});
 		});
 
 		$('body').on('click', function(e) {
 			var obj = $(e.target);
-            if (obj.closest('.flag').length) {
+			if(obj.closest('.highcharts-tracker').length){
+            	d3.selectAll('.highcharts-markers.highcharts-tracker path').attr('fill','white');
+			}else if (obj.closest('.flag').length) {
             	var index = obj.data('index');
             	$('#myModal .modal-title').html(newsData[index].headline);
             	$('#myModal .modal-body').html(newsData[index].News_Body);
 				$("#myModal").modal('show');
+            	$('.eachContent').removeClass('highlight');
+            	d3.selectAll('.highcharts-markers.highcharts-tracker path').attr('fill','white');
+            	obj.parent().addClass('highlight');
+            }else if(obj.closest('.right').length){
+            	$('.eachContent').removeClass('highlight');
+            	obj.parent().parent().addClass('highlight');
+            	var index = obj.parent().data('index');
+            	var selectable;
+            	d3.selectAll('.highcharts-markers.highcharts-tracker path').attr('fill','white');
+            	var i;
+            	for(i = 0; i < groupingArryIndex.length; i++){
+            		if(i == 0 && index <= groupingArryIndex[i] || (index > groupingArryIndex[i-1] && index <= groupingArryIndex[i])){
+            			break;
+            		}
+            	}
+            	var start, end;
+                if(i == 0){
+            		start = chartData3[3][0][index].x;
+            		end = chartData3[3][0][groupingArryIndex[0]].x;
+                }else{
+                	start = chartData3[3][0][index].x;
+                	end = chartData3[3][0][groupingArryIndex[i]].x;
+                }
+                for(var seriesIndex = 0; seriesIndex < chart.series.length; seriesIndex++){
+	                var series = chart.series[seriesIndex];
+	                if(series.type === 'flags'){
+		        		var opts = series.chart.options.flagsGrouping;
+			            if (end - start < opts.minSelectableDateRange) {
+			                var timeExtendTo = (opts.minSelectableDateRange - (end - start)) / 2;
+
+			                start -= timeExtendTo;
+			                end += timeExtendTo;
+
+			                // Shift the result date range if after extension it exceeds the possible values
+			                if (start < series.xAxis.dataMin) {
+			                    end += series.xAxis.dataMin - start;
+			                    start = series.xAxis.dataMin;
+			                } else if (end > series.xAxis.dataMax) {
+			                    start -= end - series.xAxis.dataMax;
+			                    end = series.xAxis.dataMax;
+			                }
+			            }
+		            	series.xAxis.setExtremes(start, end, true, true);
+	                }
+                }
+
+            	$('.highcharts-markers.highcharts-tracker text').each(function(){
+            		var sel = d3.select(this);
+            		var text = sel.text();
+            		var firstLetterKey = text.charCodeAt(0);
+            		if(firstLetterKey >= 65 && firstLetterKey <= 90){
+	            		var title = String.fromCharCode(65+index%26)+(parseInt(index/26)+1);
+	            		if(title == text){
+	            			selectable = d3.select(this.parentNode);
+	            			selectable.select('path').attr('fill','red');
+	            		}
+            		}else if(groupingArryIndex[i] == text){
+            			selectable = d3.select(this.parentNode);
+            			selectable.select('path').attr('fill','red');
+            		}
+            	});
             }
 		});
 	});

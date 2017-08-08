@@ -79,13 +79,13 @@
      * */
     var groupPoints = function (serie, points, opts, baseGroupFillColor) {
         var groupings = opts.groupings;
-
         // Create list of groups for every provided grouping.
         var pointsLists = groupings.map(function (grouping, index) {
             var timeSpan = grouping.groupTimeSpan;
             var resultGroupedPoints = [];
             var newGroupPoints = [];
             var newGroupPosition = 0;
+            groupingArryIndex = [];
 
             // Calculate end date for the first group
             var groupEndDate = points[0].x + timeSpan;
@@ -103,6 +103,7 @@
                 if (!points[i + 1] || points[i + 1].x > groupEndDate) {
                     // Calculate avg position for group point
                     newGroupPosition /= newGroupPoints.length;
+                    groupingArryIndex.push(i);
 
                     // Create a point for the group
                     resultGroupedPoints.push({
@@ -195,7 +196,6 @@
     H.wrap(H.Series.prototype, 'translate', function (proceed) {
         var opts = this.chart.options.flagsGrouping;
         var serie = this;
-
         // Process only at first call of the hook
         if (this.type === 'flags' && opts && !pointsGroups.get(this).isAddedToChart) {
             // Get default data range
@@ -226,7 +226,6 @@
             chart = this.chart,
             axis = this,
             timeSpan = max - min;
-
         if (opts) {
             pointsGroups.forEach(function (pointsLists, serie) {
                 if (serie.chart !== chart || serie.xAxis !== axis || !pointsGroups.get(serie).isAddedToChart) {
@@ -261,9 +260,10 @@
             opts.selectGroupOnClick &&
             eventType === 'click' &&
             this.series.type === 'flags' &&
-            this.initialPoints &&
-            this.initialPoints.length > 1
+            this.initialPoints
         ) {
+
+            displayNews(this.initialPoints[0].index, this.initialPoints[this.initialPoints.length - 1].index, -1); 
             var start = this.initialPoints[0].x;
             var end = this.initialPoints[this.initialPoints.length - 1].x;
 
@@ -283,8 +283,8 @@
                     end = this.series.xAxis.dataMax;
                 }
             }
-
             this.series.xAxis.setExtremes(start, end, true, true);
+
         }
 
 
